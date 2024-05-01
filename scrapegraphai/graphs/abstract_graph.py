@@ -3,7 +3,8 @@ Module having abstract class for creating all the graphs
 """
 from abc import ABC, abstractmethod
 from typing import Optional
-from ..models import OpenAI, Gemini, Ollama, AzureOpenAI, HuggingFace, Groq
+
+from ..models import OpenAI, Gemini, Ollama, AzureOpenAI, HuggingFace, Groq, Bedrock
 from ..helpers import models_tokens
 
 
@@ -98,6 +99,20 @@ class AbstractGraph(ABC):
             except KeyError:
                 raise KeyError("Model not supported")
             return Groq(llm_params)
+        elif "bedrock" in llm_params["model"]:
+            llm_params["model"] = llm_params["model"].split("/")[-1]
+            model_id = llm_params["model"]
+            
+            try:
+                self.model_token = models_tokens["bedrock"][llm_params["model"]]
+            except KeyError:
+                raise KeyError("Model not supported")
+            return Bedrock({
+                "model_id": model_id,
+                "model_kwargs": {
+                    "temperature": llm_params["temperature"],
+                }
+            })
         else:
             raise ValueError(
                 "Model provided by the configuration not supported")
